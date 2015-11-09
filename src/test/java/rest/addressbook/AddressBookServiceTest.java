@@ -13,7 +13,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -286,7 +285,6 @@ public class AddressBookServiceTest {
 
 		// Get the state of the person Juan (index = n - 1 => 2 - 1 = 1) and get size
 		Person juan1 = ab.getPersonList().get(1);
-		int size = ab.getPersonList().size();
 
 		// Update Maria
 		Person maria = new Person();
@@ -380,10 +378,9 @@ public class AddressBookServiceTest {
 		int size2 = ab.getPersonList().size();
 
 		// Do other similar request
-		response = client
+		client
 				.target("http://localhost:8282/contacts/person/2").request()
 				.delete();
-		assertEquals(204, response.getStatus());
 
 		// Get size after other request delete
 		int size3 = ab.getPersonList().size();
