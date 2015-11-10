@@ -71,9 +71,6 @@ public class AddressBookServiceTest {
 		AddressBook ab = new AddressBook();
 		launchServer(ab);
 
-		// Get the initial size
-		int size = ab.getPersonList().size();
-
 		// Prepare data
 		Person juan = new Person();
 		juan.setName("Juan");
@@ -107,6 +104,15 @@ public class AddressBookServiceTest {
 		// Verify that POST /contacts is well implemented by the service, i.e
 		// test that it is not safe and not idempotent
 		//////////////////////////////////////////////////////////////////////
+
+		// Get the initial size
+		int size = ab.getPersonList().size();
+
+		// Do a request post
+		response = client.target("http://localhost:8282/contacts")
+				.request(MediaType.APPLICATION_JSON)
+				.post(Entity.entity(juan, MediaType.APPLICATION_JSON));
+		assertEquals(201, response.getStatus());
 
 		// Get the list after a request post
 		int size2 = ab.getPersonList().size();
@@ -159,20 +165,18 @@ public class AddressBookServiceTest {
 		assertEquals(201, response.getStatus());
 		assertEquals(mariaURI, response.getLocation());
 		assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
+
+		// Get person before the request get
 		Person mariaUpdated = response.readEntity(Person.class);
 		assertEquals(maria.getName(), mariaUpdated.getName());
 		assertEquals(3, mariaUpdated.getId());
 		assertEquals(mariaURI, mariaUpdated.getHref());
-
-		// Get the size before a request get
-		int size = ab.getPersonList().size();
 
 		// Check that the new user exists
 		response = client.target("http://localhost:8282/contacts/person/3")
 				.request(MediaType.APPLICATION_JSON).get();
 		assertEquals(200, response.getStatus());
 		assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
-		Person mariaUpdated2 = response.readEntity(Person.class);
 		assertEquals(maria.getName(), mariaUpdated.getName());
 		assertEquals(3, mariaUpdated.getId());
 		assertEquals(mariaURI, mariaUpdated.getHref());
@@ -182,6 +186,14 @@ public class AddressBookServiceTest {
 		// test that it is safe and idempotent
 		//////////////////////////////////////////////////////////////////////	
 
+		// Get the size before a request get
+		int size = ab.getPersonList().size();
+
+		// Do a request get
+		response = client.target("http://localhost:8282/contacts/person/3")
+				.request(MediaType.APPLICATION_JSON).get();
+		// Get person returned in the first request get
+		Person mariaUpdated2 = response.readEntity(Person.class);
 		//Get the size after a request get
 		int size2 = ab.getPersonList().size();
 
@@ -189,11 +201,9 @@ public class AddressBookServiceTest {
 		response = client.target("http://localhost:8282/contacts/person/3")
 				.request(MediaType.APPLICATION_JSON).get();
 		Person mariaUpdated3 = response.readEntity(Person.class);
-
-		// Get the size after
+		// Get the size after the second request get
 		int size3 = ab.getPersonList().size();
-
-		// Test that it's safe, don't change the state(list) after one request f(A, P) => A
+		// Test that it's safe, don't change the state after one request f(A, P) => A
 		assertEquals(size,size2);
 		assertEquals(mariaUpdated.getName(),mariaUpdated2.getName());
 		assertEquals(mariaUpdated.getId(), mariaUpdated2.getId());
@@ -250,14 +260,10 @@ public class AddressBookServiceTest {
 		// Get size after a request post
 		int size2 = ab.getPersonList().size();
 
-		// Prepare other data
-		Person javier = new Person();
-		juan.setName("Javier");
-
-		// Do other request post
+		// Do other similar request post
 		client.target("http://localhost:8282/contacts")
 				.request(MediaType.APPLICATION_JSON)
-				.post(Entity.entity(javier, MediaType.APPLICATION_JSON));
+				.post(Entity.entity(diego, MediaType.APPLICATION_JSON));
 
 		// Get size after other request post
 		int size3 = ab.getPersonList().size();
@@ -381,6 +387,7 @@ public class AddressBookServiceTest {
 		client
 				.target("http://localhost:8282/contacts/person/2").request()
 				.delete();
+		assertEquals(404, response.getStatus());
 
 		// Get size after other request delete
 		int size3 = ab.getPersonList().size();
